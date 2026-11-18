@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Audiogram Site-of-Lesion Practice</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2933;--mut:#5b6770;--line:#ddd6c8;--acc:#2a6f6b;--good:#1f8a4c;--bad:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181b;--card:#1e2428;--ink:#e8ecef;--mut:#9aa5ad;--line:#333c42;--acc:#5cc2bb;--good:#4ccf84;--bad:#ff7a6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181b;--card:#1e2428;--ink:#e8ecef;--mut:#9aa5ad;--line:#333c42;--acc:#5cc2bb;--good:#4ccf84;--bad:#ff7a6b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px}
+h1{font-size:1.45rem;margin:0}h2{font-size:1.05rem;margin:14px 0 6px}
+header p{margin:2px 0 12px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;max-width:1100px;margin:0 auto}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+header{max-width:1100px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px}
+.stat{display:flex;gap:16px;flex-wrap:wrap;color:var(--mut);font-size:.92rem;margin-bottom:8px}.stat b{color:var(--ink)}
+.svgwrap{overflow-x:auto;border-radius:10px;background:#fff}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mut);margin-top:6px}
+.key b{font-size:1rem}
+.zone{cursor:pointer;transition:filter .15s}
+.zone:hover,.zone:focus-visible{filter:brightness(1.08) drop-shadow(0 0 6px var(--acc));outline:none}
+.zone.ok{filter:drop-shadow(0 0 8px #1f8a4c)}.zone.bad{filter:drop-shadow(0 0 8px #c0392b)}
+.locked .zone{pointer-events:none}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--acc);background:transparent;color:var(--ink);padding:9px 14px}
+button:hover{background:color-mix(in srgb,var(--acc) 14%,transparent)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+#none{width:100%;margin-top:8px}
+#none.ok{background:var(--good);color:#fff;border-color:var(--good)}#none.bad{background:var(--bad);color:#fff;border-color:var(--bad)}
+#none:disabled{cursor:default}
+#fb{display:none}
+#fb.show{display:block}
+#fb h3{margin:0 0 6px}#fb.right h3{color:var(--good)}#fb.wrong h3{color:var(--bad)}
+#fb ul{margin:6px 0 10px;padding-left:20px}#fb li{margin:3px 0}
+.bar{height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .6s}
+.dog{background:#fff;border-radius:10px}
+.dog rect{transition:opacity .7s}
+.small{font-size:.88rem;color:var(--mut)}
+#win{display:none;margin:8px 0;padding:10px;border-radius:10px;border:2px solid var(--good);font-weight:600}
+.credit{max-width:1100px;margin:12px auto 0;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:.82rem;line-height:1.5;text-align:center}.credit a{color:inherit}
+</style>
+</head>
+<body>
+<header>
+<h1>Name That Site of Lesion</h1>
+<p>Read the audiogram, then click where in the ear the problem is. Every correct answer helps reveal the bulldog. Reach 90% correct (after at least 10 trials) to finish it.</p>
+</header>
+<main class="grid">
+<section>
+ <div class="card">
+  <div class="stat" aria-live="polite"><span>Trial <b id="tn">1</b></span><span>Correct <b id="tc">0</b> of <b id="tt">0</b></span><span>Accuracy <b id="ta">–</b></span></div>
+  <div class="svgwrap"><svg id="aud" viewBox="0 0 580 380" role="img" aria-label="Pure tone audiogram"></svg></div>
+  <div class="key"><span><b style="color:#d62828">O</b> Right air</span><span><b style="color:#d62828">&lt;</b> Right bone</span><span><b style="color:#d62828">[</b> Right bone, masked</span><span><b style="color:#1d4ed8">X</b> Left air</span><span><b style="color:#1d4ed8">&gt;</b> Left bone</span><span><b style="color:#1d4ed8">]</b> Left bone, masked</span></div>
+ </div>
+ <div class="card" id="earcard">
+  <h2 style="margin-top:0">Where is the site of lesion?</h2><p class="small" style="margin:0 0 8px">Click the outer/middle ear (A), the inner ear (B), or the surrounding box (C) if both are involved. Choose None if hearing is normal.</p>
+  <div class="svgwrap">
+  <svg id="ear" viewBox="0 0 520 290" role="group" aria-label="Cross section of the ear. Choose A outer or middle ear, B inner ear, or C the surrounding box for both.">
+   <rect width="520" height="290" fill="#faf6ec"/>
+   <g class="zone" id="zC" tabindex="0" role="button" aria-label="C: Both outer or middle ear and inner ear"><path d="M118 30H470Q510 30 510 70V225Q510 265 470 265H158Q118 265 118 225Z" fill="#f1e3c4" stroke="#cdb88a" stroke-width="2"/></g>
+   <g class="zone" id="zA" tabindex="0" role="button" aria-label="A: Outer or middle ear">
+    <path d="M112 150C102 60 40 40 28 110 18 170 50 235 100 240 125 240 128 205 128 180Z" fill="#efc19e" stroke="#b7845f" stroke-width="2"/>
+    <path d="M88 112C60 102 52 150 78 186" fill="none" stroke="#b7845f" stroke-width="2"/>
+    <rect x="118" y="132" width="172" height="44" fill="#e7ae86" stroke="#b7845f" stroke-width="2"/>
+    <path d="M345 205Q372 250 410 268" fill="none" stroke="#e58a98" stroke-width="12" stroke-linecap="round"/>
+    <ellipse cx="340" cy="152" rx="50" ry="62" fill="#e58a98" stroke="#b5566a" stroke-width="2"/>
+    <path d="M290 122Q300 154 290 186" fill="none" stroke="#fff7e6" stroke-width="5"/>
+    <polyline points="298,150 330,128 372,138 384,162" fill="none" stroke="#fff2d0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="330" cy="128" r="7" fill="#fff2d0"/><circle cx="372" cy="138" r="5" fill="#fff2d0"/>
+   </g>
+   <g class="zone" id="zB" tabindex="0" role="button" aria-label="B: Inner ear">
+    <g fill="none" stroke="#f5c451" stroke-width="8"><circle cx="430" cy="100" r="20"/><circle cx="468" cy="104" r="17"/><circle cx="450" cy="78" r="16"/></g>
+    <path d="M470 190L505 218" stroke="#e8d27a" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="450" cy="165" r="38" fill="#f5c451" stroke="#b08a1c" stroke-width="2"/>
+    <path id="spiral" fill="none" stroke="#8a6a10" stroke-width="3"/>
+   </g>
+   <g font-family="system-ui,sans-serif" font-size="14" font-weight="600" fill="#3a2f1f" pointer-events="none">
+    <text x="128" y="52">C · Both (click the box)</text><text x="30" y="272">A · Outer ear</text><text x="297" y="84">A · Middle ear</text><text x="420" y="46">B · Inner ear</text>
+   </g>
+  </svg></div>
+  <button id="none">None · Normal hearing (no site of lesion)</button>
+ </div>
+</section>
+<aside>
+ <div class="card">
+  <h2 style="margin-top:0">Your bulldog</h2>
+  <svg id="dogsvg" class="dog" viewBox="0 0 300 300" role="img" aria-label="Bulldog wearing headphones, revealed as you answer correctly">
+   <defs>
+    <g id="dog">
+     <path d="M105 240Q150 305 195 240Z" fill="#d9a45a"/>
+     <ellipse cx="78" cy="90" rx="24" ry="16" transform="rotate(-35 78 90)" fill="#b5763a"/><ellipse cx="222" cy="90" rx="24" ry="16" transform="rotate(35 222 90)" fill="#b5763a"/>
+     <ellipse cx="150" cy="165" rx="105" ry="92" fill="#d9a65f" stroke="#a87432" stroke-width="3"/>
+     <path d="M105 104Q150 92 195 104M115 119Q150 109 185 119" fill="none" stroke="#a87432" stroke-width="3" stroke-linecap="round"/>
+     <circle cx="108" cy="140" r="11" fill="#fff" stroke="#4a2f14" stroke-width="2"/><circle cx="192" cy="140" r="11" fill="#fff" stroke="#4a2f14" stroke-width="2"/>
+     <circle cx="110" cy="142" r="6" fill="#1d1d1d"/><circle cx="190" cy="142" r="6" fill="#1d1d1d"/><circle cx="112" cy="139" r="2" fill="#fff"/><circle cx="192" cy="139" r="2" fill="#fff"/>
+     <path d="M90 128Q108 120 126 130M174 130Q192 120 210 128" fill="none" stroke="#4a2f14" stroke-width="4" stroke-linecap="round"/>
+     <ellipse cx="150" cy="200" rx="70" ry="46" fill="#ecc98f" stroke="#a87432" stroke-width="3"/>
+     <ellipse cx="105" cy="224" rx="34" ry="26" fill="#ecc98f" stroke="#a87432" stroke-width="3"/><ellipse cx="195" cy="224" rx="34" ry="26" fill="#ecc98f" stroke="#a87432" stroke-width="3"/>
+     <ellipse cx="150" cy="176" rx="26" ry="15" fill="#1d1d1d"/><ellipse cx="143" cy="171" rx="8" ry="3" fill="#fff" opacity=".35"/>
+     <ellipse cx="150" cy="228" rx="14" ry="10" fill="#ee7a8c"/>
+     <path d="M150 190V207M150 207Q125 222 98 208M150 207Q175 222 202 208" fill="none" stroke="#4a2f14" stroke-width="3" stroke-linecap="round"/>
+     <polygon points="113,218 123,218 118,205" fill="#fff"/><polygon points="177,218 187,218 182,205" fill="#fff"/>
+     <path d="M100 258Q150 290 200 258" fill="none" stroke="#c0392b" stroke-width="10" stroke-linecap="round"/><circle cx="150" cy="278" r="8" fill="#e9b824"/>
+     <path d="M52 168C52 30 248 30 248 168" fill="none" stroke="#2b2d42" stroke-width="12" stroke-linecap="round"/>
+     <ellipse cx="46" cy="170" rx="22" ry="38" fill="#2b2d42"/><ellipse cx="54" cy="170" rx="13" ry="29" fill="#2ec4b6"/>
+     <ellipse cx="254" cy="170" rx="22" ry="38" fill="#2b2d42"/><ellipse cx="246" cy="170" rx="13" ry="29" fill="#2ec4b6"/>
+    </g>
+    <mask id="mk" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="300"><g id="tiles"></g></mask>
+   </defs>
+   <use href="#dog" opacity=".07" style="filter:grayscale(1)"/>
+   <use href="#dog" mask="url(#mk)"/>
+  </svg>
+  <div class="bar" aria-hidden="true"><i id="pb"></i></div>
+  <div id="win" role="status">Your bulldog is complete! You reached 90% correct. Keep practicing if you like.</div>
+  <p class="small" id="goal"></p>
+  <button id="reset">Start over</button>
+ </div>
+ <div class="card" id="fb" role="status" aria-live="polite"></div>
+</aside>
+</main>
+<footer class="credit">Designed by Alison Morrison, AuD, for CMSD 3130 Introduction to Audiology, University of Georgia. Developed with the assistance of Claude (Anthropic), a generative AI tool. &copy; 2026 Alison Morrison. Licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="license noopener" target="_blank">CC BY-NC 4.0</a>.</footer>
+<script>
+const $=s=>document.querySelector(s);
+const F=[250,500,1000,2000,4000,8000],BCMAX=[999,80,80,80,80];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+/* A = outer/middle (conductive), B = inner (sensorineural), C = both (mixed) */
+const T=[
+{c:'A',n:'flat conductive loss (like fluid behind the eardrum)',ac:[40,40,40,40,40,40],bc:[0,0,5,0,5]},
+{c:'A',n:'low-frequency conductive loss',ac:[50,45,35,25,20,15],bc:[5,5,5,0,5]},
+{c:'A',n:'conductive loss with a mild dip at 2000 Hz (otosclerosis-like)',ac:[50,45,40,35,30,30],bc:[5,10,10,20,10]},
+{c:'A',n:'mild flat conductive loss (like cerumen or a partial blockage)',ac:[30,30,25,25,30,30],bc:[0,0,5,0,5]},
+{c:'A',n:'moderate-severe conductive loss (like ossicular discontinuity)',ac:[60,60,60,55,55,60],bc:[5,0,5,0,5]},
+{c:'A',n:'moderate flat conductive loss',ac:[50,50,55,50,50,55],bc:[5,5,5,10,5]},
+{c:'B',n:'gradually sloping high-frequency sensorineural loss',ac:[15,20,30,45,60,70],bc:[]},
+{c:'B',n:'noise-induced notch at 4000 Hz',ac:[10,10,15,20,60,40],bc:[]},
+{c:'B',n:'steeply sloping (presbycusis-like) sensorineural loss',ac:[25,25,35,55,70,80],bc:[]},
+{c:'B',n:'flat moderate sensorineural loss',ac:[45,45,50,50,50,55],bc:[]},
+{c:'B',n:'rising (low-frequency) sensorineural loss',ac:[60,55,45,35,25,20],bc:[]},
+{c:'B',n:'“cookie-bite” sensorineural loss',ac:[30,45,55,55,40,30],bc:[]},
+{c:'B',n:'mild flat sensorineural loss',ac:[30,30,35,30,35,35],bc:[]},
+{c:'C',n:'flat moderately-severe mixed loss',ac:[60,60,65,65,65,70],bc:[30,30,35,35,40]},
+{c:'C',n:'sloping mixed loss',ac:[45,50,55,65,75,80],bc:[20,20,30,45,55]},
+{c:'C',n:'moderate mixed loss, mildly sloping',ac:[45,45,50,50,55,60],bc:[25,30,30,35,35]},
+{c:'C',n:'moderate-severe sloping mixed loss',ac:[55,55,55,60,70,75],bc:[25,25,30,40,50]},
+{c:'C',n:'moderate mixed loss with high-frequency decline',ac:[40,40,45,50,60,65],bc:[20,20,25,30,40]},
+{c:'B',n:'severe sloping sensorineural loss',ac:[55,65,75,85,90,95],bc:[]},
+{c:'B',n:'severe flat sensorineural loss',ac:[75,80,80,80,85,85],bc:[]},
+{c:'C',n:'severe mixed loss',ac:[80,85,90,90,95,100],bc:[50,55,65,70,75]},
+{c:'C',n:'severe sloping mixed loss',ac:[65,70,75,85,95,100],bc:[40,45,55,65,80]},
+{c:'N',n:'normal hearing',ac:[5,5,10,10,5,10],bc:[]}
+];
+const SITE={A:'outer/middle ear',B:'inner ear',C:'both the outer/middle ear and the inner ear'};
+const TYPE={A:'conductive',B:'sensorineural',C:'mixed'};
+let st,cur;
+function newState(){st={n:0,c:0,idx:0,ach:false,cats:[],pool:{A:[],B:[],C:[],N:[]},locked:false}}
+function nextTrial(){
+ if(!st.cats.length)st.cats=shuffle(['A','B','C','N']);
+ const cat=st.cats.pop();
+ if(!st.pool[cat].length)st.pool[cat]=shuffle(T.map((t,i)=>i).filter(i=>T[i].c===cat));
+ const t=T[st.pool[cat].pop()];
+ let ac=t.ac.slice(),bc;
+ if(cat==='B'||cat==='N'){ac=ac.map(v=>cat==='N'?Math.max(0,Math.min(20,v+pick([-5,0,0,5]))):Math.max(0,v+pick([-5,0,0,5])));ac=ac.map((v,i)=>i<5?Math.min(v,BCMAX[i]+10):v);bc=[0,1,2,3,4].map(i=>Math.max(0,Math.min(BCMAX[i],ac[i]-pick([0,0,5]))))}
+ else{ac=ac.map(v=>v+pick([0,0,5]));bc=t.bc.map((v,i)=>Math.min(BCMAX[i],v))}
+ bc=bc.slice(1);cur={cat,name:t.n,ear:Math.random()<.5?'R':'L',ac,bc,masked:bc.some((v,i)=>ac[i+1]-v>=15)};
+ st.idx++;st.locked=false;
+ drawAud();clearMarks();$('#fb').className='';$('#fb').innerHTML='';
+ $('#none').disabled=false;$('#earcard').classList.remove('locked');
+ $('#zA').tabIndex=0;$('#zB').tabIndex=0;$('#zC').tabIndex=0;updateStats();
+}
+/* ---------- audiogram ---------- */
+function drawAud(){
+ const X=i=>80+i*88,Y=d=>40+(d+10)*2.4,col=cur.ear==='R'?'#d62828':'#1d4ed8';
+ let s='<rect width="580" height="380" fill="#fff"/>';
+ 
+ for(let d=-10;d<=120;d+=10)s+=`<line x1="${X(0)-40}" x2="${X(5)+40}" y1="${Y(d)}" y2="${Y(d)}" stroke="#b8b8b8" stroke-width="${d===0?1.6:1}"/><text x="${X(0)-46}" y="${Y(d)+4}" text-anchor="end" font-size="11" fill="#333">${d}</text>`;
+ F.forEach((f,i)=>{s+=`<line x1="${X(i)}" x2="${X(i)}" y1="${Y(-10)}" y2="${Y(120)}" stroke="#b8b8b8"/><text x="${X(i)}" y="30" text-anchor="middle" font-size="12" fill="#333">${f}</text>`});
+ s+=`<rect x="${X(0)-40}" y="${Y(-10)}" width="${5*88+80}" height="${Y(120)-Y(-10)}" fill="none" stroke="#555" stroke-width="1.5"/>`;
+ s+='<text x="290" y="14" text-anchor="middle" font-size="12" font-weight="600" fill="#333">Frequency (Hz)</text><text transform="translate(12 210) rotate(-90)" text-anchor="middle" font-size="12" font-weight="600" fill="#333">Hearing Level (dB HL)</text>';
+ s+=`<polyline points="${cur.ac.map((v,i)=>X(i)+','+Y(v)).join(' ')}" fill="none" stroke="${col}" stroke-width="2" ${cur.ear==='L'?'stroke-dasharray="7 5"':''}/>`;
+ cur.ac.forEach((v,i)=>{const x=X(i),y=Y(v);s+=cur.ear==='R'?`<circle cx="${x}" cy="${y}" r="8" fill="none" stroke="${col}" stroke-width="2.4"/>`:`<path d="M${x-7} ${y-7}L${x+7} ${y+7}M${x+7} ${y-7}L${x-7} ${y+7}" stroke="${col}" stroke-width="2.4" stroke-linecap="round"/>`});
+ cur.bc.forEach((v,i)=>{const y=Y(v);if(cur.ear==='R'){const x=X(i+1)-14;s+=`<polyline points="${cur.masked?`${x+4},${y-8} ${x-3},${y-8} ${x-3},${y+8} ${x+4},${y+8}`:`${x+5},${y-8} ${x-4},${y} ${x+5},${y+8}`}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`}else{const x=X(i+1)+14;s+=`<polyline points="${cur.masked?`${x-4},${y-8} ${x+3},${y-8} ${x+3},${y+8} ${x-4},${y+8}`:`${x-5},${y-8} ${x+4},${y} ${x-5},${y+8}`}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`}});
+ $('#aud').innerHTML=s;
+ $('#aud').setAttribute('aria-label','Pure tone audiogram. Air conduction thresholds '+cur.ac.join(', ')+' dB HL at 250 to 8000 Hz. Bone conduction thresholds '+cur.bc.join(', ')+' dB HL at 500 to 4000 Hz. '+(cur.ear==='R'?'Right':'Left')+' ear.');
+}
+/* ---------- answering ---------- */
+function degree(p){return p<=25?'normal':p<=40?'mild':p<=55?'moderate':p<=70?'moderately-severe':p<=90?'severe':'profound'}
+function answer(sel){
+ if(st.locked)return;st.locked=true;
+ const ok=sel===cur.cat;st.n++;if(ok)st.c++;
+ $('#earcard').classList.add('locked');$('#none').disabled=true;
+ const zones={A:$('#zA'),B:$('#zB'),C:$('#zC'),N:$('#none')},want=cur.cat==='C'?['A','B','C']:[cur.cat];
+ want.forEach(k=>zones[k].classList.add('ok'));
+ 
+ if(!ok)zones[sel].classList.add('bad');
+ $('#zA').tabIndex=-1;$('#zB').tabIndex=-1;$('#zC').tabIndex=-1;
+ const pta=Math.round((cur.ac[1]+cur.ac[2]+cur.ac[3])/3),gaps=cur.bc.map((v,i)=>cur.ac[i+1]-v),ng=gaps.filter(g=>g>=15).length;
+ const bcAbn=cur.bc.filter(v=>v>25).length>=2,acAbn=cur.ac.some(v=>v>25);
+ const reason={A:'Bone conduction is normal, so the inner ear is working. Air conduction is poorer than bone conduction, so the problem is in the outer or middle ear.',B:'Air and bone conduction are about the same (no air-bone gap), so sound reaches the inner ear fine, but the inner ear is not responding normally.',C:'Bone conduction is abnormal (inner ear involvement) <em>and</em> air conduction is even worse than bone conduction (an air-bone gap, so outer/middle ear involvement too).',N:'All air-conduction thresholds are within normal limits (≤ 25 dB HL) and there is no air-bone gap, so hearing is normal and there is no site of lesion.'}[cur.cat];
+ const fb=$('#fb');fb.className='show '+(ok?'right':'wrong');
+ fb.innerHTML=`<h3>${ok?'Correct!':'Not quite.'}</h3><p>${cur.cat==='N'?'There is <b>no site of lesion</b>: hearing is normal.':`The site of lesion is the <b>${SITE[cur.cat]}</b> (${TYPE[cur.cat]} hearing loss).`}</p><ul>
+ <li><b>Ear tested:</b> ${cur.ear==='R'?'Right (red O and &lt;)':'Left (blue X and &gt;)'}</li>
+ <li><b>Hearing:</b> ${acAbn?`abnormal; ${degree(pta)} (three-frequency average ${pta} dB HL), ${cur.name}`:'normal (all air-conduction thresholds ≤ 25 dB HL)'}</li>
+ <li><b>Bone conduction:</b> ${bcAbn?'abnormal':'normal (≤ 25 dB HL)'}</li>
+ <li><b>Air-bone gap (≥ 15 dB):</b> ${ng>=1?'yes, at '+ng+' of 4 frequencies (so masked bone-conduction symbols are used)':'no'}</li></ul><p>${reason}</p>
+ <button class="primary" id="next">Next audiogram →</button>`;
+ $('#next').onclick=nextTrial;$('#next').focus({preventScroll:true});
+ fb.scrollIntoView({block:'nearest',behavior:'smooth'});
+ updateStats();
+}
+function clearMarks(){['#zA','#zB','#zC','#none'].forEach(s=>$(s).classList.remove('ok','bad'))}
+/* ---------- progress + bulldog ---------- */
+function updateStats(){
+ const acc=st.n?st.c/st.n:0;
+ $('#tn').textContent=st.idx;$('#tc').textContent=st.c;$('#tt').textContent=st.n;$('#ta').textContent=st.n?Math.round(acc*100)+'%':'–';
+ if(!st.ach&&st.n>=10&&acc>=.9)st.ach=true;
+ const p=st.ach?1:Math.min(1,acc/.9)*Math.min(1,st.n/10);
+ const tl=window.rank||[];$('#tiles').querySelectorAll('rect').forEach((r,i)=>{r.style.opacity=Math.max(0,Math.min(1,p*36-tl[i]))});
+ $('#pb').style.width=Math.round(p*100)+'%';$('#win').style.display=st.ach?'block':'none';
+ let g;
+ if(st.ach)g='Bulldog complete. Nice work!';
+ else{let k=Math.max(Math.ceil(9*st.n-10*st.c-1e-9),10-st.n,0);g=st.n===0?'Goal: at least 10 trials with 90% or more correct.':`Goal: 90% correct after at least 10 trials. If every remaining answer is right, you need ${k} more.`}
+ $('#goal').textContent=g;
+}
+function buildTiles(){
+ let seed=7;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ window.rank=shuffle(Array.from({length:36},(_,i)=>i)).sort(()=>r()-.5);
+ let h='';for(let i=0;i<36;i++)h+=`<rect x="${(i%6)*50}" y="${Math.floor(i/6)*50}" width="51" height="51" fill="#fff" style="opacity:0"/>`;
+ $('#tiles').innerHTML=h;
+ const ord=window.rank.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);window.rank=[];ord.forEach(([v,i],k)=>window.rank[i]=k);
+}
+(function(){let d='M450 165';for(let t=.4;t<=3.3*Math.PI;t+=.15){const rr=2+t*3.4;d+=`L${(450+rr*Math.cos(t)).toFixed(1)} ${(165+rr*Math.sin(t)).toFixed(1)}`}$('#spiral').setAttribute('d',d)})();
+$('#zA').onclick=()=>answer('A');$('#zB').onclick=()=>answer('B');$('#zC').onclick=()=>answer('C');$('#none').onclick=()=>answer('N');
+['#zA','#zB','#zC'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$(s).dispatchEvent(new Event('click'))}}));
+$('#reset').onclick=()=>{newState();buildTiles();nextTrial()};
+newState();buildTiles();nextTrial();
+</script>
+</body>
+</html>
