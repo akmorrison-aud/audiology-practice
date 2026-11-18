@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audiogram Practice Games</title>
+<meta name="description" content="Interactive audiogram interpretation practice for introductory audiology students. CMSD 3130 Introduction to Audiology, University of Georgia.">
+<style>
+:root{--bg:#F2F4F7;--surface:#fff;--ink:#15181D;--muted:#586170;--line:#D2D8E0;--accent:#BA0C2F;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1217;--surface:#171B22;--ink:#E7EBF1;--muted:#9AA4B3;--line:#2D3440;--accent:#FF4F6C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1217;--surface:#171B22;--ink:#E7EBF1;--muted:#9AA4B3;--line:#2D3440;--accent:#FF4F6C;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:40px 16px}
+main{max-width:760px;margin:0 auto}
+h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.15;margin:0 0 8px}
+.lede{color:var(--muted);margin:0 0 28px;max-width:60ch}
+.games{display:grid;gap:16px}
+a.game{display:block;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+a.game:hover,a.game:focus-visible{border-color:var(--accent);transform:translateY(-1px)}
+a.game:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+a.game h2{margin:0 0 6px;font-size:1.2rem;color:var(--accent)}
+a.game p{margin:0;color:var(--muted)}
+a.game .go{display:inline-block;margin-top:12px;font-weight:600;color:var(--ink)}
+.note{margin-top:28px;color:var(--muted);font-size:.95rem}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+footer a{color:inherit}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Audiogram Practice Games</h1>
+<p class="lede">Interactive practice for reading pure-tone audiograms, built for undergraduate students in CMSD 3130 Introduction to Audiology at the University of Georgia. Each game generates new audiograms, gives feedback after every answer, and is complete after at least 10 trials at 90% accuracy.</p>
+
+<div class="games">
+<a class="game" href="Audiogram-Site-of-Lesion-Practice.html">
+<h2>Audiogram Site-of-Lesion Practice</h2>
+<p>Examine air- and bone-conduction thresholds, then click the part of the ear involved: outer/middle ear, inner ear, both or none/normal hearing.</p>
+<span class="go">Start practicing →</span>
+</a>
+<a class="game" href="Audiogram-Sentence-Builder.html">
+<h2>Audiogram Sentence Builder</h2>
+<p>Describe each hearing loss in clinical language by placing its degree, configuration, and type into a report-style sentence.</p>
+<span class="go">Start practicing →</span>
+</a>
+</div>
+
+<p class="note">The games run in any modern web browser on a computer, tablet, or phone. No student data is collected; any saved progress stays in the student's own browser.</p>
+
+<footer>Designed by Alison Morrison, AuD, for CMSD 3130 Introduction to Audiology, University of Georgia. Developed with the assistance of Claude (Anthropic), a generative AI tool. &copy; 2026 Alison Morrison. Licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="license noopener" target="_blank">CC BY-NC 4.0</a>.</footer>
+</main>
+</body>
+</html>
