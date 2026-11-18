@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Does What? — Audiology vs. Otolaryngology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EFEAE0;
+    --paper-card: #FBF9F4;
+    --ink: #23303D;
+    --ink-soft: #5B6673;
+    --line: #D8D1C0;
+    --audiology: #3C7A73;
+    --audiology-soft: #E4EFEC;
+    --ent: #B5502E;
+    --ent-soft: #F3E3DA;
+    --both: #A9822F;
+    --both-soft: #F0E7D2;
+    --correct: #3C7A73;
+    --incorrect: #B5502E;
+    --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:32px 18px 60px;
+  }
+  .app{width:100%;max-width:760px;}
+
+  /* ---------- Header ---------- */
+  header{
+    margin-bottom:28px;
+  }
+  .eyebrow-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .waveform{flex-shrink:0;}
+  h1{
+    font-family:'Source Serif 4', serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,38px);
+    line-height:1.1;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:15px;
+    line-height:1.55;
+    max-width:56ch;
+    margin:0;
+  }
+
+  /* ---------- Progress ---------- */
+  .progress-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:26px 0 8px;
+  }
+  .progress-track{
+    flex:1;
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--ink);
+    width:0%;
+    transition:width .35s ease;
+  }
+  .progress-label{
+    font-size:13px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .score-label{
+    font-size:13px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+    border-left:1px solid var(--line);
+    padding-left:14px;
+  }
+
+  /* ---------- Card ---------- */
+  .card-stack{
+    position:relative;
+    min-height:200px;
+    margin-bottom:18px;
+  }
+  .card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:34px 28px;
+    text-align:center;
+    box-shadow:0 1px 0 rgba(35,48,61,0.04);
+  }
+  .card-eyebrow{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .card-text{
+    font-family:'Source Serif 4', serif;
+    font-size:clamp(19px,3.4vw,24px);
+    line-height:1.35;
+    font-weight:600;
+    color:var(--ink);
+  }
+
+  .feedback{
+    margin-top:16px;
+    border-radius:var(--radius);
+    padding:16px 18px;
+    font-size:14.5px;
+    line-height:1.5;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.correct{background:var(--audiology-soft); border:1px solid var(--audiology); color:#1E3E3A;}
+  .feedback.incorrect{background:var(--ent-soft); border:1px solid var(--ent); color:#5A2A16;}
+  .feedback strong{display:block; margin-bottom:4px; font-size:15px;}
+
+  /* ---------- Bins ---------- */
+  .bins{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+    margin-top:20px;
+  }
+  .bin{
+    border:1.5px solid var(--line);
+    background:var(--paper-card);
+    border-radius:var(--radius);
+    padding:16px 10px;
+    text-align:center;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    color:var(--ink);
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .bin:hover{transform:translateY(-2px);}
+  .bin:active{transform:translateY(0);}
+  .bin.audiology{border-color:var(--audiology);}
+  .bin.ent{border-color:var(--ent);}
+  .bin.both{border-color:var(--both);}
+  .bin.audiology:hover{background:var(--audiology-soft);}
+  .bin.ent:hover{background:var(--ent-soft);}
+  .bin.both:hover{background:var(--both-soft);}
+  .bin[disabled]{pointer-events:none; opacity:.55;}
+  .bin[disabled].locked-correct,.bin[disabled].locked-wrong{opacity:1;}
+  .bin .bin-sub{
+    display:block;
+    font-weight:400;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+
+  .bin.locked-correct{background:var(--audiology); border-color:var(--audiology); color:#fff;}
+  .bin.locked-correct .bin-sub{color:#E4EFEC;}
+  .bin.locked-wrong{background:var(--ent); border-color:var(--ent); color:#fff;}
+  .bin.locked-wrong .bin-sub{color:#F3E3DA;}
+  .bin.locked-correct::before{content:'\2713  '}
+  .bin.locked-wrong::before{content:'\2717  '}
+
+  .next-row{
+    margin-top:18px;
+    display:flex;
+    justify-content:flex-end;
+  }
+  .next-btn{
+    background:var(--ink);
+    color:var(--paper-card);
+    border:none;
+    border-radius:var(--radius);
+    padding:11px 22px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s ease;
+  }
+  .next-btn.show{opacity:1; pointer-events:auto;}
+  .next-btn:hover{background:#101823;}
+
+  /* ---------- Legend ---------- */
+  .legend{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-top:26px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .dot.audiology{background:var(--audiology);}
+  .dot.ent{background:var(--ent);}
+  .dot.both{background:var(--both);}
+
+  /* ---------- Results ---------- */
+  .results{display:none;}
+  .results.show{display:block; margin-top:22px;}
+  .card-stack.hide, .bins.hide, .next-row.hide, .progress-row.hide{display:none;}
+
+  .results-hero{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:32px 28px;
+    text-align:center;
+    margin-bottom:24px;
+  }
+  .results-score{
+    font-family:'Source Serif 4', serif;
+    font-weight:700;
+    font-size:44px;
+    margin:0 0 4px;
+  }
+  .results-caption{
+    color:var(--ink-soft);
+    font-size:14.5px;
+    margin:0 0 18px;
+  }
+  .retry-btn{
+    background:none;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    border-radius:var(--radius);
+    padding:10px 20px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .retry-btn:hover{background:var(--ink); color:var(--paper-card);}
+
+  .review-item{
+    border:1px solid var(--line);
+    border-left-width:4px;
+    background:var(--paper-card);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:10px;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .review-item.wrong{border-left-color:var(--ent);}
+  .review-item.right{border-left-color:var(--audiology);}
+  .review-item .rtext{font-weight:600; margin-bottom:5px;}
+  .review-item .rmeta{color:var(--ink-soft); font-size:13px;}
+  .review-item .rmeta b{color:var(--ink);}
+
+  .credit{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:12.5px;line-height:1.5;text-align:center}
+  .credit a{color:inherit}
+  .bin:focus-visible,.next-btn:focus-visible,.retry-btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  @media (max-width:480px){
+    .bins{grid-template-columns:1fr;}
+    .card{padding:26px 20px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="eyebrow-row">
+      <div class="progress-label" id="topLabel">Scope of practice</div>
+    </div>
+    <h1>Who Does What?</h1>
+    <p class="sub">Sort each responsibility by the professional who typically performs it: audiologist, otolaryngologist (ENT), or both.</p>
+  </header>
+
+  <div class="progress-row" id="progressRow">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">1 / 21</div>
+    <div class="score-label" id="scoreLabel">Score: 0</div>
+  </div>
+
+  <div class="card-stack" id="cardStack">
+    <div class="card">
+      <div class="card-eyebrow">This professional...</div>
+      <div class="card-text" id="cardText">Loading…</div>
+    </div>
+    <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+  </div>
+
+  <div class="bins" id="bins">
+    <button class="bin audiology" data-answer="audiology">
+      Audiologist
+      <span class="bin-sub">Primarily audiology</span>
+    </button>
+    <button class="bin both" data-answer="both">
+      Both
+      <span class="bin-sub">Shared or team-based</span>
+    </button>
+    <button class="bin ent" data-answer="ent">
+      Otolaryngologist
+      <span class="bin-sub">Primarily ENT</span>
+    </button>
+  </div>
+
+  <div class="next-row" id="nextRow">
+    <button class="next-btn" id="nextBtn">Next →</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+    <div class="results-hero">
+      <p class="results-score" id="finalScore">0 / 21</p>
+      <p class="results-caption" id="finalCaption">responsibilities sorted correctly</p>
+      <button class="retry-btn" id="retryBtn">Sort again</button>
+    </div>
+    <div id="reviewList"></div>
+  </div>
+
+  <footer class="credit">Designed by Alison Morrison, AuD, for CMSD 3130 Introduction to Audiology, University of Georgia. Developed with the assistance of Claude (Anthropic), a generative AI tool. &copy; 2026 Alison Morrison. Licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="license noopener" target="_blank">CC BY-NC 4.0</a>.</footer>
+
+</div>
+
+<script>
+const items = [
+  { text: "Performs a comprehensive hearing evaluation (audiometry)", answer: "audiology",
+    note: "Diagnostic hearing testing is a core, non-surgical audiology service." },
+  { text: "Selects, fits, and programs hearing aids", answer: "audiology",
+    note: "Hearing aid selection and programming is squarely within audiology practice." },
+  { text: "Performs the surgery to implant a cochlear implant device", answer: "ent",
+    note: "Surgical implantation requires a physician — this is done by an otolaryngologist (often a neurotologist)." },
+  { text: "Programs and adjusts (\u201cmaps\u201d) a cochlear implant's external speech processor", answer: "audiology",
+    note: "Post-surgical mapping and processor adjustment is done by an audiologist, not the surgeon." },
+  { text: "Diagnoses ear infections and prescribes antibiotics", answer: "ent",
+    note: "Medical diagnosis and prescribing medication requires a physician." },
+  { text: "Performs tympanoplasty (surgical eardrum repair)", answer: "ent",
+    note: "Any surgical procedure on the ear is performed by an otolaryngologist." },
+  { text: "Conducts vestibular/balance testing (e.g., VNG, rotary chair)", answer: "audiology",
+    note: "Audiologists typically administer and interpret these diagnostic balance tests." },
+  { text: "Evaluates and counsels patients experiencing tinnitus", answer: "both",
+    note: "ENTs rule out medical causes; audiologists provide sound therapy and counseling — often a shared care path." },
+  { text: "Performs newborn hearing screening and diagnostic follow-up testing", answer: "audiology",
+    note: "Newborn hearing screening and diagnostic ABR testing are audiology services." },
+  { text: "Removes tumors of the head, neck, and skull base", answer: "ent",
+    note: "Head and neck oncologic surgery is within the surgical scope of otolaryngology." },
+  { text: "Performs sinus surgery", answer: "ent",
+    note: "Sinus surgery is a surgical procedure performed by an otolaryngologist." },
+  { text: "Evaluates the underlying cause of a patient's dizziness or vertigo", answer: "both",
+    note: "ENTs investigate medical/surgical causes while audiologists provide detailed vestibular function testing — typically a team effort." },
+  { text: "Recommends and fits assistive listening devices (e.g., FM systems, captioned phones)", answer: "audiology",
+    note: "Non-medical device recommendations for communication access fall under audiology." },
+  { text: "Performs a tonsillectomy or adenoidectomy", answer: "ent",
+    note: "These are surgical procedures performed by an otolaryngologist." },
+  { text: "Determines candidacy for a cochlear implant", answer: "both",
+    note: "Candidacy evaluation typically involves an audiologic work-up and a medical/surgical evaluation together." },
+  { text: "Performs otoacoustic emissions (OAE) testing", answer: "audiology",
+    note: "OAE testing is a standard diagnostic tool administered by audiologists." },
+  { text: "Diagnoses and medically manages M\u00e9ni\u00e8re's disease", answer: "ent",
+    note: "Medical diagnosis and treatment (including medication or surgical options) is managed by an otolaryngologist." },
+  { text: "Provides hearing protection counseling and hearing loss prevention education", answer: "both",
+    note: "Both professions routinely counsel patients on protecting hearing, often as part of broader care." },
+  { text: "Provides medical clearance for hearing aid use, especially for pediatrics", answer: "ent",
+    note: "Ruling out medical causes before hearing aid fitting is a medical determination made by an otolaryngologist." },
+  { text: "Orders imaging as part of a medical work-up for hearing loss", answer: "ent",
+    note: "Ordering diagnostic imaging (e.g., CT, MRI) is within the medical scope of an otolaryngologist. Note: some states have recently changed regulations to allow audiologists to order imaging." },
+  { text: "Makes additional recommendations and referrals to other healthcare professionals as part of case management", answer: "both",
+    note: "Care coordination and referrals are a shared responsibility across both professions." }
+];
+
+// shuffle once per load
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+let deck = shuffle(items);
+let idx = 0;
+let score = 0;
+let answered = false;
+let missed = [];
+
+const cardText = document.getElementById('cardText');
+const feedback = document.getElementById('feedback');
+const bins = document.querySelectorAll('.bin');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const scoreLabel = document.getElementById('scoreLabel');
+const nextBtn = document.getElementById('nextBtn');
+const cardStack = document.getElementById('cardStack');
+const binsWrap = document.getElementById('bins');
+const nextRow = document.getElementById('nextRow');
+const results = document.getElementById('results');
+const finalScore = document.getElementById('finalScore');
+const finalCaption = document.getElementById('finalCaption');
+const reviewList = document.getElementById('reviewList');
+const retryBtn = document.getElementById('retryBtn');
+
+const labelFor = { audiology: "Audiologist", ent: "Otolaryngologist", both: "Both professions" };
+
+function renderCard(){
+  answered = false;
+  feedback.className = 'feedback';
+  feedback.innerHTML = '';
+  nextBtn.classList.remove('show');
+  nextBtn.tabIndex = -1;
+  bins.forEach(b => {
+    b.disabled = false;
+    b.classList.remove('locked-correct','locked-wrong');
+  });
+  const item = deck[idx];
+  cardText.textContent = item.text;
+  progressFill.style.width = ((idx)/deck.length*100) + '%';
+  progressLabel.textContent = (idx+1) + ' / ' + deck.length;
+  scoreLabel.textContent = 'Score: ' + score;
+}
+
+function handleBinClick(e){
+  if(answered) return;
+  const chosen = e.currentTarget.dataset.answer;
+  const item = deck[idx];
+  answered = true;
+  bins.forEach(b => b.disabled = true);
+
+  const isCorrect = chosen === item.answer;
+  if(isCorrect){
+    score++;
+    e.currentTarget.classList.add('locked-correct');
+    feedback.className = 'feedback correct show';
+    feedback.innerHTML = '<strong>Correct — ' + labelFor[item.answer] + '</strong>' + item.note;
+  } else {
+    e.currentTarget.classList.add('locked-wrong');
+    const correctBin = document.querySelector('.bin[data-answer="'+item.answer+'"]');
+    if(correctBin) correctBin.classList.add('locked-correct');
+    feedback.className = 'feedback incorrect show';
+    feedback.innerHTML = '<strong>Not quite — the answer is ' + labelFor[item.answer] + '</strong>' + item.note;
+    missed.push(item);
+  }
+  scoreLabel.textContent = 'Score: ' + score;
+  nextBtn.classList.add('show');
+  nextBtn.tabIndex = 0;
+  nextBtn.focus({preventScroll:true});
+}
+
+nextBtn.addEventListener('click', () => {
+  idx++;
+  if(idx >= deck.length){
+    showResults();
+  } else {
+    renderCard();
+  }
+});
+
+bins.forEach(b => b.addEventListener('click', handleBinClick));
+
+function showResults(){
+  progressFill.style.width = '100%';
+  cardStack.classList.add('hide');
+  binsWrap.classList.add('hide');
+  nextRow.classList.add('hide');
+  document.getElementById('progressRow').classList.add('hide');
+  results.classList.add('show');
+
+  finalScore.textContent = score + ' / ' + deck.length;
+  const pct = Math.round((score/deck.length)*100);
+  let caption = 'responsibilities sorted correctly (' + pct + '%)';
+  finalCaption.textContent = caption;
+
+  reviewList.innerHTML = '';
+  if(missed.length === 0){
+    const div = document.createElement('div');
+    div.className = 'review-item right';
+    div.innerHTML = '<div class="rtext">Clean sweep — every item sorted correctly.</div><div class="rmeta">Nice command of the audiology / otolaryngology divide.</div>';
+    reviewList.appendChild(div);
+  } else {
+    const heading = document.createElement('p');
+    heading.style.cssText = 'font-family:Source Serif 4, serif; font-weight:600; font-size:17px; margin:0 0 12px;';
+    heading.textContent = 'Worth a second look';
+    reviewList.appendChild(heading);
+    missed.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'review-item wrong';
+      div.innerHTML = '<div class="rtext">' + item.text + '</div><div class="rmeta">Correct answer: <b>' + labelFor[item.answer] + '</b> — ' + item.note + '</div>';
+      reviewList.appendChild(div);
+    });
+  }
+}
+
+retryBtn.addEventListener('click', () => {
+  deck = shuffle(items);
+  idx = 0; score = 0; missed = [];
+  results.classList.remove('show');
+  cardStack.classList.remove('hide');
+  binsWrap.classList.remove('hide');
+  nextRow.classList.remove('hide');
+  document.getElementById('progressRow').classList.remove('hide');
+  renderCard();
+});
+
+renderCard();
+</script>
+</body>
+</html>
